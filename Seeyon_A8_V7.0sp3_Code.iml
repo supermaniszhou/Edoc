@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="Spring" name="Spring">
+      <configuration>
+        <fileset id="fileset" name="Spring Application Context" removed="false">
+          <file>file://$MODULE_DIR$/apps-edoc/exchange-controller.xml</file>
+          <file>file://$MODULE_DIR$/apps-edoc/exchange-manager.xml</file>
+          <file>file://$MODULE_DIR$/seeyon/WEB-INF/cfgHome/spring/spring-config-manager.xml</file>
+          <file>file://$MODULE_DIR$/seeyon/WEB-INF/cfgHome/plugin/edoc/spring/spring-edoc-api.xml</file>
+          <file>file://$MODULE_DIR$/seeyon/WEB-INF/cfgHome/plugin/edoc/spring/spring-edoc-controller.xml</file>
+          <file>file://$MODULE_DIR$/seeyon/WEB-INF/cfgHome/plugin/edoc/spring/spring-edoc-dao.xml</file>
+          <file>file://$MODULE_DIR$/seeyon/WEB-INF/cfgHome/plugin/edoc/spring/spring-edoc-manager.xml</file>
+          <file>file://$MODULE_DIR$/seeyon/WEB-INF/cfgHome/plugin/edoc/spring/spring-edoc-permission.xml</file>
+          <file>file://$MODULE_DIR$/seeyon/WEB-INF/cfgHome/plugin/edoc/spring/spring-edoc-section-portal.xml</file>
+        </fileset>
+      </configuration>
+    </facet>
+  </component>
+  <component name="NewModuleRootManager">
+    <output url="file://F:/Seeyon/A8/ApacheJetspeed/webapps/seeyon/WEB-INF/classes" />
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/apps-edoc" isTestSource="false" />
+    </content>
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="jdk" jdkName="1.8" jdkType="JavaSDK" />
+    <orderEntry type="library" name="lib" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Tomcat 8.5.20" level="application_server_libraries" />
+    <orderEntry type="library" name="itextpdf-5.5.6" level="project" />
+    <orderEntry type="library" name="flying-saucer-core-9.1.6" level="project" />
+    <orderEntry type="library" name="enjoy-3.6" level="project" />
+  </component>
+</module>

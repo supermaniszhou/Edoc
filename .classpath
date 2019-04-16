@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="apps-edoc"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/ctp"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="output" path="seeyon/WEB-INF/classes"/>
+</classpath>

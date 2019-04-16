@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="flying-saucer-core-9.1.6">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/seeyon/WEB-INF/lib/flying-saucer-core-9.1.6.jar!/" />
+      <root url="jar://$PROJECT_DIR$/seeyon/WEB-INF/lib/flying-saucer-pdf-itext5-9.1.6.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
