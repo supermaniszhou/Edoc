@@ -3201,19 +3201,21 @@ public class EdocController extends BaseController {
 
 
             // 文单路径(文单模板)
-            String sFormFilePath = spath.substring(0, spath.lastIndexOf(String.valueOf(year) + "\\")) + "template" + File.separator + edocSummary.getFormId() + ".pdf";
-            String templateFilePath = spath.substring(0, spath.lastIndexOf(String.valueOf(year) + "\\")) + "template" + File.separator;
+            System.out.println("获取系统路径:" + spath);
+//            String sFormFilePath = spath.substring(0, spath.lastIndexOf(String.valueOf(year) + "\\")) + "template" + File.separator + edocSummary.getFormId() + ".pdf";
+            int p = spath.lastIndexOf(String.valueOf(year) + "/");
+            String templateFilePath = (spath.substring(0, p) + "template" + File.separator).replaceAll("\\\\", "/");
 
             int insertRes = 0;
 
             // 文单存在，则插入文单域相应的内容
-            String wdPdfPath = spath + File.separator + (edocSummary.getId()).toString() + File.separator;
-            if (new File(sFormFilePath) != null && new File(sFormFilePath).exists()) {
-                //第一种
-//                insertFormRegionValue(edocSummary, "http://localhost:8088/convert/webservice/ConvertService?wsdl", "FillTextField", sFormFilePath, wdPdfPath);
-                //第二种
-                insertFormRegionValue(edocSummary, "http://localhost:8088/convert/webservice/ConvertService?wsdl", "FillTextField", templateFilePath, wdPdfPath);
-            }
+            String wdPdfPath = (spath + File.separator + (edocSummary.getId()).toString() + File.separator).replaceAll("\\\\", "/");
+//            if (new File(sFormFilePath) != null && new File(sFormFilePath).exists()) {
+            //第一种
+//                insertFormRegionValue(edocSummary, "http://10.100.1.132:8088/convert/webservice/ConvertService?wsdl", "FillTextField", sFormFilePath, wdPdfPath);
+            //第二种
+            insertFormRegionValue(edocSummary, "http://10.100.1.132:8088/convert/webservice/ConvertService?wsdl", "FillTextField", templateFilePath, wdPdfPath);
+//            }
             // 附件转换成cebx
             // 获取相关的附件列表
             List<Attachment> atts = attachmentManager.getByReference(edocSummary.getId());
@@ -3226,10 +3228,10 @@ public class EdocController extends BaseController {
             File file;
             for (Attachment att : atts) {
                 suffix = att.getFilename().substring(att.getFilename().lastIndexOf("."), att.getFilename().length());
-                filePath = spath + File.separator + att.getFileUrl();
+                filePath = (spath + File.separator + att.getFileUrl()).replaceAll("\\\\", "/");
                 file = new File(filePath);
                 if (file.exists() && (".doc".equals(suffix) || ".docx".equals(suffix) || ".pdf".equals(suffix) ||
-                        ".ppt".equals(suffix) || ".pptx".equals(suffix)) || ".cebx".equals(suffix)) {
+                        ".ppt".equals(suffix) || ".pptx".equals(suffix) || ".wps".equals(suffix)) || ".cebx".equals(suffix)) {
                     FileUtil.copy(filePath, filePath + suffix);
                     attFileName += (filePath + suffix + "|");
                 }
@@ -3241,10 +3243,10 @@ public class EdocController extends BaseController {
             }
 
             //获取正文文件所在的路径
-            String sBodyPath = spath + File.separator + body.getContent() + ".doc";
+            String sBodyPath = (spath + File.separator + body.getContent() + ".doc").replaceAll("\\\\", "/");
 
             // copy 一份正文的doc文件
-            FileUtil.copy(new File(spath + File.separator + body.getContent()), new File(sBodyPath));
+            FileUtil.copy(new File((spath + File.separator + body.getContent()).replaceAll("\\\\", "/")), new File(sBodyPath));
 
             //获取正文文件路径
             File bodyFile = new File(sBodyPath);
@@ -3253,7 +3255,7 @@ public class EdocController extends BaseController {
 //            String fileName = returnFileName(wdPdfPath, "1", null);
 
             //获取文单pdf文件路径
-            File formFile = new File(wdPdfPath.concat(edocSummary.getId().toString()+ ".doc"));
+            File formFile = new File(wdPdfPath.concat(edocSummary.getId().toString() + ".doc"));
             if (bodyFile.exists() && formFile.exists()) {
                 System.out.println("合并文件开始！！！");
                 // 2015-07-28 modify 默认发文
@@ -3262,9 +3264,25 @@ public class EdocController extends BaseController {
                 if (edocSummary.getEdocType() == 1) {
                     isReceive = true;
                 }
+                //ftp://root:xkjt1234@10.100.1.76:21/2007/word.docx
                 String mergeSavePath = wdPdfPath;
-                String mergerpath = wdPdfPath.concat(edocSummary.getId().toString()+ ".doc") + "|" + sBodyPath + "|" + attFileName;
-                mergeFormAndBody(edocSummary, "http://localhost:8088/convert/webservice/ConvertService?wsdl", mergerpath, mergeSavePath, isReceive);
+                String ftpUpload = "ftp://root:xkjt1234@10.100.1.76:21" + wdPdfPath.substring(wdPdfPath.indexOf("upload") + 6).replaceAll("\\\\", "/");
+                String wendanP = ftpUpload.concat(edocSummary.getId().toString() + ".doc");
+                String zwp = sBodyPath.substring(sBodyPath.indexOf("upload") + 6).replaceAll("\\\\", "/");
+                String zhengwenP = "ftp://root:xkjt1234@10.100.1.76:21" + zwp;
+                String fujianP = "";
+                if (!("").equals(attFileName) && attFileName.length() > 0) {
+                    fujianP = "ftp://root:xkjt1234@10.100.1.76:21" + attFileName.substring(attFileName.indexOf("upload") + 6).replaceAll("\\\\", "/");
+                }
+
+                System.out.println("公文单地址路径：" + wendanP);
+                System.out.println("正文地址路径：" + zhengwenP);
+                System.out.println("附件地址路径：" + fujianP);
+                String mergerpath = wendanP + "|" + zhengwenP;
+                if (!("").equals(fujianP)) {
+                    mergerpath = mergerpath.concat("|" + fujianP);
+                }
+                mergeFormAndBody(edocSummary, "http://10.100.1.132:8088/convert/webservice/ConvertService?wsdl", mergerpath, mergeSavePath, isReceive);
                 bodyFile.delete();
                 formFile.delete();
                 returnFileName(wdPdfPath, "2", new File(wdPdfPath.concat(edocSummary.getId().toString() + ".pdf")));
@@ -3316,8 +3334,8 @@ public class EdocController extends BaseController {
      * 合并公文单与正文
      */
     public void mergeFormAndBody(EdocSummary edocSummary, String url, String mergepath, String savepath, boolean flag) {
-
-        CtpPdfSavepath ctpPdfSavepath = new CtpPdfSavepath(edocSummary.getId(), savepath);
+        String reverPath = savepath.replaceAll("\\\\", "/");
+        CtpPdfSavepath ctpPdfSavepath = new CtpPdfSavepath(edocSummary.getId(), reverPath);
 
         try {
             ctpPdfSavepathManager.insertCtpPdfSavepath(ctpPdfSavepath);
@@ -3326,10 +3344,12 @@ public class EdocController extends BaseController {
         }
 
         Client client;
+        String ftpdownload = "ftp://root:xkjt1234@10.100.1.76:21" + savepath.substring(savepath.indexOf("upload") + 6).replaceAll("\\\\", "/");
+        System.out.println("合并文件保存路径：" + ftpdownload);
         try {
             client = new Client(new URL(url));
             Object[] result = client.invoke("ConcatFiles",
-                    new Object[]{mergepath, savepath, 0, 5, url, "test"});
+                    new Object[]{mergepath, ftpdownload, 0, 5, url, "test"});
             System.out.println(result[0]);
         } catch (Exception e) {
             e.printStackTrace();
@@ -4604,7 +4624,6 @@ public class EdocController extends BaseController {
 //        } catch (Exception e) {
 //            e.printStackTrace();
 //        }
-
         /**第二种方法：采用freemark模板 */
         Configuration configuration = new Configuration();
         try {
@@ -14921,7 +14940,6 @@ public class EdocController extends BaseController {
      * 解锁，公文提交或者暂存待办的时候进行解锁,与Ajax解锁一起，构成两次解锁，避免解锁失败，节点无法修改的问题出现
      *
      * @param userId
-     * @param summaryId
      */
     private void unLock(Long userId, EdocSummary summary) {
         if (summary == null)
