@@ -123,7 +123,7 @@ import com.seeyon.ctp.common.usermessage.MessageReceiver;
 import com.seeyon.ctp.common.usermessage.UserMessageManager;
 import com.seeyon.ctp.common.web.util.WebUtil;
 import com.seeyon.ctp.event.EventDispatcher;
-import com.seeyon.ctp.organization.OrgConstants.Role_NAME;
+import com.seeyon.ctp.organization.OrgConstants.*;
 import com.seeyon.ctp.organization.bo.MemberPost;
 import com.seeyon.ctp.organization.bo.V3xOrgAccount;
 import com.seeyon.ctp.organization.bo.V3xOrgDepartment;
