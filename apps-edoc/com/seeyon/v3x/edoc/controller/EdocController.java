@@ -4,23 +4,13 @@ import java.io.*;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.nio.file.Files;
 import java.rmi.RemoteException;
-import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.Timestamp;
 import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.xml.namespace.QName;
 
-import com.itextpdf.text.Document;
-import com.itextpdf.text.DocumentException;
-import com.itextpdf.text.PageSize;
-import com.itextpdf.text.pdf.BaseFont;
-import com.itextpdf.text.pdf.PdfWriter;
-import com.itextpdf.tool.xml.XMLWorkerHelper;
 import com.seeyon.v3x.edoc.domain.*;
 import com.seeyon.v3x.edoc.manager.*;
 import com.seeyon.v3x.edoc.util.*;
@@ -201,8 +191,6 @@ import com.seeyon.v3x.system.signet.manager.V3xHtmDocumentSignatManager;
 
 import net.joinwork.bpm.definition.BPMSeeyonPolicy;
 import net.joinwork.bpm.engine.wapi.WorkflowBpmContext;
-import org.xhtmlrenderer.pdf.ITextFontResolver;
-import org.xhtmlrenderer.pdf.ITextRenderer;
 
 /**
  * 类描述： 创建日期：
