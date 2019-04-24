@@ -24,6 +24,9 @@ import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.codehaus.xfire.client.Client;
+import org.dom4j.Document;
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
 import org.hibernate.criterion.DetachedCriteria;
 import org.hibernate.criterion.Restrictions;
 import org.springframework.web.servlet.ModelAndView;
@@ -2828,6 +2831,7 @@ public class EdocController extends BaseController {
             // }
             // }
 
+
             // -------性能优化，该方法在新建公文单发送，编辑发送，退件箱编辑后发送都会调用，希望在新建公文发送时就不执行删除附件操作了
             String hasSummaryId = request.getParameter("newSummaryId");
             boolean isNewSent = false; // 是否新建公文发送
@@ -2979,11 +2983,23 @@ public class EdocController extends BaseController {
 
             String process_xml = request.getParameter("process_xml");
             String templeteProcessId = request.getParameter("templeteProcessId");
-            try {
-                affairId = edocManager.transRunCase(edocSummary, body, senderOninion, sendType, options, comm, agentToId,
-                        isNewSent, process_xml, workflowNodePeoplesInput, workflowNodeConditionInput, templeteProcessId);
-            } catch (Exception e) {
-                LOGGER.error("发起公文流程异常", e);
+
+            if(isQuickSend == false){
+                int flag = transitionPdf(edocSummary,body);
+                if(flag==-1){
+                    StringBuffer sb = new StringBuffer();
+                    sb.append("alert('" + StringEscapeUtils.escapeJavaScript("出错了，请联系管理员") + "');");
+                    sb.append("history.back();");
+                    rendJavaScript(response, sb.toString());
+                    return null;
+                }else{
+                    try {
+                        affairId = edocManager.transRunCase(edocSummary, body, senderOninion, sendType, options, comm, agentToId,
+                                isNewSent, process_xml, workflowNodePeoplesInput, workflowNodeConditionInput, templeteProcessId);
+                    } catch (Exception e) {
+                        LOGGER.error("发起公文流程异常", e);
+                    }
+                }
             }
 
             // 不跟踪 或者 全部跟踪的时候不向部门跟踪表中添加数据，所以将下面这个参数串设置为空。
@@ -3177,8 +3193,23 @@ public class EdocController extends BaseController {
             SharedWithThreadLocal.remove();
             rendJavaScript(response, sb.toString());
             //--------------------------------------Pdf-----------------------------------------------------------------------------
-            // 获取系统路径
 
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            edocLockManager.unlock(edocSummary.getSubject(), user.getId());
+            if (lockDocMarkSubject == null) {
+                edocMarkLockManager.unlock(lockDocMark);
+            }
+        }
+        // long endtime = System.currentTimeMillis();
+        return null;
+    }
+
+    public int transitionPdf(EdocSummary edocSummary,EdocBody body){
+        int flag=-1;
+        try {
             //获取系统路径
             String spath = fileManager.getFolder(new Date(), false);
             Calendar calendar = Calendar.getInstance();
@@ -3198,12 +3229,7 @@ public class EdocController extends BaseController {
 
             // 文单存在，则插入文单域相应的内容
             String wdPdfPath = (spath + File.separator + (edocSummary.getId()).toString() + File.separator).replaceAll("\\\\", "/");
-//            if (new File(sFormFilePath) != null && new File(sFormFilePath).exists()) {
-            //第一种
-//                insertFormRegionValue(edocSummary, "http://10.100.1.132:8088/convert/webservice/ConvertService?wsdl", "FillTextField", sFormFilePath, wdPdfPath);
-            //第二种
             insertFormRegionValue(edocSummary, "http://10.100.1.132:8088/convert/webservice/ConvertService?wsdl", "FillTextField", templateFilePath, wdPdfPath);
-//            }
             // 附件转换成cebx
             // 获取相关的附件列表
             List<Attachment> atts = attachmentManager.getByReference(edocSummary.getId());
@@ -3239,10 +3265,6 @@ public class EdocController extends BaseController {
 
             //获取正文文件路径
             File bodyFile = new File(sBodyPath);
-
-
-//            String fileName = returnFileName(wdPdfPath, "1", null);
-
             //获取文单pdf文件路径
             File formFile = new File(wdPdfPath.concat(edocSummary.getId().toString() + ".doc"));
             if (bodyFile.exists() && formFile.exists()) {
@@ -3267,7 +3289,6 @@ public class EdocController extends BaseController {
                         fujianP.append( "z:" + arr[i].substring(arr[i].indexOf("upload")+6).replaceAll("\\\\", "/"));
                         fujianP.append("|");
                     }
-//                    fujianP = "ftp://root:xkjt1234@10.100.1.76:21" + attFileName.substring(attFileName.indexOf("upload") + 6).replaceAll("\\\\", "/");
                 }
 
                 System.out.println("公文单地址路径：" + wendanP);
@@ -3286,26 +3307,19 @@ public class EdocController extends BaseController {
                     f.mkdirs();
                 }
 
-                mergeFormAndBody(edocSummary, "http://10.100.1.132:8088/convert/webservice/ConvertService?wsdl", mergerpath, mergeSavePath, isReceive);
+                flag= mergeFormAndBody(edocSummary, "http://10.100.1.132:8088/convert/webservice/ConvertService?wsdl", mergerpath, mergeSavePath, isReceive);
                 bodyFile.delete();
                 formFile.delete();
                 String pdfpath=mergeSavePath.concat(edocSummary.getId().toString() + ".pdf");
                 returnFileName(mergeSavePath, "2", new File(pdfpath));
 
             }
-
-        } catch (Exception e) {
+        }catch (Exception e){
             e.printStackTrace();
-        } finally {
-            edocLockManager.unlock(edocSummary.getSubject(), user.getId());
-            if (lockDocMarkSubject == null) {
-                edocMarkLockManager.unlock(lockDocMark);
-            }
         }
-        // long endtime = System.currentTimeMillis();
-        return null;
+        // 0:代表转换成功，-1：转换失败
+        return flag;
     }
-
 
     public String returnFileName(String path, String type, File file) {
         File wdfile = new File(path);
@@ -3326,7 +3340,10 @@ public class EdocController extends BaseController {
     /**
      * 合并公文单与正文
      */
-    public void mergeFormAndBody(EdocSummary edocSummary, String url, String mergepath, String savepath, boolean flag) {
+    public int mergeFormAndBody(EdocSummary edocSummary, String url, String mergepath, String savepath, boolean flag) {
+
+        int cbCode=-1;
+
         String reverPath = savepath.replaceAll("\\\\", "/");
         CtpPdfSavepath ctpPdfSavepath = new CtpPdfSavepath(edocSummary.getId(), reverPath);
 
@@ -3344,9 +3361,15 @@ public class EdocController extends BaseController {
             Object[] result = client.invoke("ConcatFiles",
                     new Object[]{mergepath, ftpdownload, 0, 5, url, "test"});
             System.out.println(result[0]);
+            Document document= DocumentHelper.parseText((String) result[0]);
+            Element rootElt=document.getRootElement();
+            String ts=rootElt.elementText("result");
+            System.out.println(ts);
+            cbCode=Integer.parseInt(ts);
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return cbCode;
     }
 
     public void pdfView(HttpServletRequest request, HttpServletResponse response) {
