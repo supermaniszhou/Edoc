@@ -3219,7 +3219,8 @@ public class EdocController extends BaseController {
                 filePath = (spath + File.separator + att.getFileUrl()).replaceAll("\\\\", "/");
                 file = new File(filePath);
                 if (file.exists() && (".doc".equals(suffix) || ".docx".equals(suffix) || ".pdf".equals(suffix) ||
-                        ".ppt".equals(suffix) || ".pptx".equals(suffix) || ".wps".equals(suffix)) || ".cebx".equals(suffix)) {
+                        ".ppt".equals(suffix) || ".pptx".equals(suffix) || ".wps".equals(suffix)
+                        || ".xlsx".equals(suffix) || ".xls".equals(suffix)) || ".cebx".equals(suffix)) {
                     FileUtil.copy(filePath, filePath + suffix);
                     attFileName += (filePath + suffix + "|");
                 }
@@ -3254,16 +3255,16 @@ public class EdocController extends BaseController {
                 }
                 //ftp://root:xkjt1234@10.100.1.76:21/2007/word.docx
                 String mergeSavePath = wdPdfPath;
-                String ftpUpload = "ftp://root:xkjt1234@10.100.1.76:21" + wdPdfPath.substring(wdPdfPath.indexOf("upload") + 6).replaceAll("\\\\", "/");
+                String ftpUpload = "z:" + wdPdfPath.substring(wdPdfPath.indexOf("upload") + 6).replaceAll("\\\\", "/");
                 String wendanP = ftpUpload.concat(edocSummary.getId().toString() + ".doc");
                 String zwp = sBodyPath.substring(sBodyPath.indexOf("upload") + 6).replaceAll("\\\\", "/");
-                String zhengwenP = "ftp://root:xkjt1234@10.100.1.76:21" + zwp;
+                String zhengwenP = "z:" + zwp;
 //                String fujianP = "";
                 StringBuffer fujianP = new StringBuffer();
                 if (!("").equals(attFileName) && attFileName.length() > 0) {
                     String[] arr=attFileName.split("\\|");
                     for (int i = 0; i < arr.length; i++) {
-                        fujianP.append( "ftp://root:xkjt1234@10.100.1.76:21/" + arr[i].substring(arr[i].indexOf("upload")).replaceAll("\\\\", "/"));
+                        fujianP.append( "z:" + arr[i].substring(arr[i].indexOf("upload")+6).replaceAll("\\\\", "/"));
                         fujianP.append("|");
                     }
 //                    fujianP = "ftp://root:xkjt1234@10.100.1.76:21" + attFileName.substring(attFileName.indexOf("upload") + 6).replaceAll("\\\\", "/");
@@ -3276,25 +3277,23 @@ public class EdocController extends BaseController {
                 if (!("").equals(fujianP.toString())) {
                     mergerpath = mergerpath.concat("|" + fujianP.toString());
                 }
+
+                //类根路径  F:\Seeyon\A8\ApacheJetspeed\webapps\seeyon\WEB-INF\classes
+                String classPath=this.getClass().getResource("/").getPath();
+                mergeSavePath=(classPath.substring(0,classPath.indexOf("WEB-INF"))).concat("pdf")+File.separator+edocSummary.getId()+File.separator;
+                File f=new File(mergeSavePath);
+                if(!f.exists()){
+                    f.mkdirs();
+                }
+
                 mergeFormAndBody(edocSummary, "http://10.100.1.132:8088/convert/webservice/ConvertService?wsdl", mergerpath, mergeSavePath, isReceive);
                 bodyFile.delete();
                 formFile.delete();
-                returnFileName(wdPdfPath, "2", new File(wdPdfPath.concat(edocSummary.getId().toString() + ".pdf")));
+                String pdfpath=mergeSavePath.concat(edocSummary.getId().toString() + ".pdf");
+                returnFileName(mergeSavePath, "2", new File(pdfpath));
 
             }
 
-//            //只要html文件
-//            boolean flag = edocFormManager.writeFormFileZlc(val, savepath);
-//            //周刘成  html 转 PDF  开始++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//            try {
-//                String html = FormParseUtil.getHtmlContentZlc(val, "");
-//                Files.write(new File("F:\\form.html").toPath(), html.getBytes("utf8"));
-//                MakePDF.htmlToPdf("F:\\form.html", savepath + Long.toString(val) + ".pdf");
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
-
-            //结束++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -3338,7 +3337,7 @@ public class EdocController extends BaseController {
         }
 
         Client client;
-        String ftpdownload = "ftp://root:xkjt1234@10.100.1.76:21" + savepath.substring(savepath.indexOf("upload") + 6).replaceAll("\\\\", "/");
+        String ftpdownload = "y:" + savepath.substring(savepath.indexOf("pdf") + 3).replaceAll("\\\\", "/");
         System.out.println("合并文件保存路径：" + ftpdownload);
         try {
             client = new Client(new URL(url));
