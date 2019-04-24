@@ -3258,17 +3258,23 @@ public class EdocController extends BaseController {
                 String wendanP = ftpUpload.concat(edocSummary.getId().toString() + ".doc");
                 String zwp = sBodyPath.substring(sBodyPath.indexOf("upload") + 6).replaceAll("\\\\", "/");
                 String zhengwenP = "ftp://root:xkjt1234@10.100.1.76:21" + zwp;
-                String fujianP = "";
+//                String fujianP = "";
+                StringBuffer fujianP = new StringBuffer();
                 if (!("").equals(attFileName) && attFileName.length() > 0) {
-                    fujianP = "ftp://root:xkjt1234@10.100.1.76:21" + attFileName.substring(attFileName.indexOf("upload") + 6).replaceAll("\\\\", "/");
+                    String[] arr=attFileName.split("\\|");
+                    for (int i = 0; i < arr.length; i++) {
+                        fujianP.append( "ftp://root:xkjt1234@10.100.1.76:21/" + arr[i].substring(arr[i].indexOf("upload")).replaceAll("\\\\", "/"));
+                        fujianP.append("|");
+                    }
+//                    fujianP = "ftp://root:xkjt1234@10.100.1.76:21" + attFileName.substring(attFileName.indexOf("upload") + 6).replaceAll("\\\\", "/");
                 }
 
                 System.out.println("公文单地址路径：" + wendanP);
                 System.out.println("正文地址路径：" + zhengwenP);
                 System.out.println("附件地址路径：" + fujianP);
                 String mergerpath = wendanP + "|" + zhengwenP;
-                if (!("").equals(fujianP)) {
-                    mergerpath = mergerpath.concat("|" + fujianP);
+                if (!("").equals(fujianP.toString())) {
+                    mergerpath = mergerpath.concat("|" + fujianP.toString());
                 }
                 mergeFormAndBody(edocSummary, "http://10.100.1.132:8088/convert/webservice/ConvertService?wsdl", mergerpath, mergeSavePath, isReceive);
                 bodyFile.delete();
