@@ -2984,15 +2984,15 @@ public class EdocController extends BaseController {
             String process_xml = request.getParameter("process_xml");
             String templeteProcessId = request.getParameter("templeteProcessId");
 
-            if(isQuickSend == false){
-                int flag = transitionPdf(edocSummary,body);
-                if(flag==-1){
+            if (isQuickSend == false) {
+                int flag = transitionPdf(edocSummary, body);
+                if (flag == -1) {
                     StringBuffer sb = new StringBuffer();
-                    sb.append("alert('" + StringEscapeUtils.escapeJavaScript("出错了，请联系管理员") + "');");
+                    sb.append("alert('" + StringEscapeUtils.escapeJavaScript("转换服务出错了，请联系管理员") + "');");
                     sb.append("history.back();");
                     rendJavaScript(response, sb.toString());
                     return null;
-                }else{
+                } else {
                     try {
                         affairId = edocManager.transRunCase(edocSummary, body, senderOninion, sendType, options, comm, agentToId,
                                 isNewSent, process_xml, workflowNodePeoplesInput, workflowNodeConditionInput, templeteProcessId);
@@ -3207,8 +3207,8 @@ public class EdocController extends BaseController {
         return null;
     }
 
-    public int transitionPdf(EdocSummary edocSummary,EdocBody body){
-        int flag=-1;
+    public int transitionPdf(EdocSummary edocSummary, EdocBody body) {
+        int flag = -1;
         try {
             //获取系统路径
             String spath = fileManager.getFolder(new Date(), false);
@@ -3222,102 +3222,107 @@ public class EdocController extends BaseController {
             // 文单路径(文单模板)
             System.out.println("获取系统路径:" + spath);
 //            String sFormFilePath = spath.substring(0, spath.lastIndexOf(String.valueOf(year) + "\\")) + "template" + File.separator + edocSummary.getFormId() + ".pdf";
-            int p = spath.lastIndexOf(String.valueOf(year) + "/");
+            int p = spath.lastIndexOf(String.valueOf(year));
             String templateFilePath = (spath.substring(0, p) + "template" + File.separator).replaceAll("\\\\", "/");
 
             int insertRes = 0;
 
             // 文单存在，则插入文单域相应的内容
             String wdPdfPath = (spath + File.separator + (edocSummary.getId()).toString() + File.separator).replaceAll("\\\\", "/");
-            insertFormRegionValue(edocSummary, "http://10.100.1.132:8088/convert/webservice/ConvertService?wsdl", "FillTextField", templateFilePath, wdPdfPath);
-            // 附件转换成cebx
-            // 获取相关的附件列表
-            List<Attachment> atts = attachmentManager.getByReference(edocSummary.getId());
-            // 合并附件用到的附件参数
-            String attFileName = "";
-            // 附件后缀名
-            String suffix = "";
-            // 无后缀的附件路径
-            String filePath = "";
-            File file;
-            for (Attachment att : atts) {
-                suffix = att.getFilename().substring(att.getFilename().lastIndexOf("."), att.getFilename().length());
-                filePath = (spath + File.separator + att.getFileUrl()).replaceAll("\\\\", "/");
-                file = new File(filePath);
-                if (file.exists() && (".doc".equals(suffix) || ".docx".equals(suffix) || ".pdf".equals(suffix) ||
-                        ".ppt".equals(suffix) || ".pptx".equals(suffix) || ".wps".equals(suffix)
-                        || ".xlsx".equals(suffix) || ".xls".equals(suffix)) || ".cebx".equals(suffix)) {
-                    FileUtil.copy(filePath, filePath + suffix);
-                    attFileName += (filePath + suffix + "|");
-                }
-            }
-            // 表示附件是可以合并的附件
-            if (!"".equals(attFileName)) {
-                attFileName = attFileName.substring(0, attFileName.length() - 1);
-                System.out.println("合并附件路径：" + attFileName);
-            }
-
-            //获取正文文件所在的路径
-            String sBodyPath = (spath + File.separator + body.getContent() + ".doc").replaceAll("\\\\", "/");
-
-            // copy 一份正文的doc文件
-            FileUtil.copy(new File((spath + File.separator + body.getContent()).replaceAll("\\\\", "/")), new File(sBodyPath));
-
-            //获取正文文件路径
-            File bodyFile = new File(sBodyPath);
-            //获取文单pdf文件路径
-            File formFile = new File(wdPdfPath.concat(edocSummary.getId().toString() + ".doc"));
-            if (bodyFile.exists() && formFile.exists()) {
-                System.out.println("合并文件开始！！！");
-                // 2015-07-28 modify 默认发文
-                Boolean isReceive = false;
-                // 2015-07-28 modify 表示是收文
-                if (edocSummary.getEdocType() == 1) {
-                    isReceive = true;
-                }
-                //ftp://root:xkjt1234@10.100.1.76:21/2007/word.docx
-                String mergeSavePath = wdPdfPath;
-                String ftpUpload = "z:" + wdPdfPath.substring(wdPdfPath.indexOf("upload") + 6).replaceAll("\\\\", "/");
-                String wendanP = ftpUpload.concat(edocSummary.getId().toString() + ".doc");
-                String zwp = sBodyPath.substring(sBodyPath.indexOf("upload") + 6).replaceAll("\\\\", "/");
-                String zhengwenP = "z:" + zwp;
-//                String fujianP = "";
-                StringBuffer fujianP = new StringBuffer();
-                if (!("").equals(attFileName) && attFileName.length() > 0) {
-                    String[] arr=attFileName.split("\\|");
-                    for (int i = 0; i < arr.length; i++) {
-                        fujianP.append( "z:" + arr[i].substring(arr[i].indexOf("upload")+6).replaceAll("\\\\", "/"));
-                        fujianP.append("|");
+            // -2:表示模板不存在   -1：表示合并pdf失败
+            flag = insertFormRegionValue(edocSummary, templateFilePath, wdPdfPath);
+            if (flag != -2) {
+                // 附件转换成cebx
+                // 获取相关的附件列表
+                List<Attachment> atts = attachmentManager.getByReference(edocSummary.getId());
+                // 合并附件用到的附件参数
+                String attFileName = "";
+                // 附件后缀名
+                String suffix = "";
+                // 无后缀的附件路径
+                String filePath = "";
+                File file;
+                for (Attachment att : atts) {
+                    suffix = att.getFilename().substring(att.getFilename().lastIndexOf("."), att.getFilename().length());
+                    filePath = (spath + File.separator + att.getFileUrl()).replaceAll("\\\\", "/");
+                    file = new File(filePath);
+                    if (file.exists() && (".doc".equals(suffix) || ".docx".equals(suffix) || ".pdf".equals(suffix) ||
+                            ".ppt".equals(suffix) || ".pptx".equals(suffix) || ".wps".equals(suffix)
+                            || ".xlsx".equals(suffix) || ".xls".equals(suffix)) || ".cebx".equals(suffix)) {
+                        FileUtil.copy(filePath, filePath + suffix);
+                        attFileName += (filePath + suffix + "|");
                     }
                 }
-
-                System.out.println("公文单地址路径：" + wendanP);
-                System.out.println("正文地址路径：" + zhengwenP);
-                System.out.println("附件地址路径：" + fujianP);
-                String mergerpath = wendanP + "|" + zhengwenP;
-                if (!("").equals(fujianP.toString())) {
-                    mergerpath = mergerpath.concat("|" + fujianP.toString());
+                // 表示附件是可以合并的附件
+                if (!"".equals(attFileName)) {
+                    attFileName = attFileName.substring(0, attFileName.length() - 1);
+                    System.out.println("合并附件路径：" + attFileName);
                 }
 
-                //类根路径  F:\Seeyon\A8\ApacheJetspeed\webapps\seeyon\WEB-INF\classes
-                String classPath=this.getClass().getResource("/").getPath();
-                mergeSavePath=(classPath.substring(0,classPath.indexOf("WEB-INF"))).concat("pdf")+File.separator+edocSummary.getId()+File.separator;
-                File f=new File(mergeSavePath);
-                if(!f.exists()){
-                    f.mkdirs();
+                //获取正文文件所在的路径
+                String sBodyPath = (spath + File.separator + body.getContent() + ".doc").replaceAll("\\\\", "/");
+
+                // copy 一份正文的doc文件
+                FileUtil.copy(new File((spath + File.separator + body.getContent()).replaceAll("\\\\", "/")), new File(sBodyPath));
+
+                //获取正文文件路径
+                File bodyFile = new File(sBodyPath);
+                //获取文单pdf文件路径
+                File formFile = new File(wdPdfPath.concat(edocSummary.getId().toString() + ".doc"));
+                if (bodyFile.exists() && formFile.exists()) {
+                    System.out.println("合并文件开始！！！");
+                    // 2015-07-28 modify 默认发文
+                    Boolean isReceive = false;
+                    // 2015-07-28 modify 表示是收文
+                    if (edocSummary.getEdocType() == 1) {
+                        isReceive = true;
+                    }
+                    //ftp://root:xkjt1234@10.100.1.76:21/2007/word.docx
+                    String mergeSavePath = wdPdfPath;
+                    String ftpUpload = wdPdfPath.replaceAll("\\\\", "/");
+                    String wendanP = ftpUpload.concat(edocSummary.getId().toString() + ".doc");
+                    String zwp = sBodyPath.replaceAll("\\\\", "/");
+                    String zhengwenP = zwp;
+//                String fujianP = "";
+                    StringBuffer fujianP = new StringBuffer();
+                    if (!("").equals(attFileName) && attFileName.length() > 0) {
+                        String[] arr = attFileName.split("\\|");
+                        for (int i = 0; i < arr.length; i++) {
+                            fujianP.append(arr[i].replaceAll("\\\\", "/"));
+                            fujianP.append("|");
+                        }
+                    }
+
+                    System.out.println("公文单地址路径：" + wendanP);
+                    System.out.println("正文地址路径：" + zhengwenP);
+                    System.out.println("附件地址路径：" + fujianP);
+                    String mergerpath = wendanP + "|" + zhengwenP;
+                    if (!("").equals(fujianP.toString())) {
+                        mergerpath = mergerpath.concat("|" + fujianP.toString());
+                    }
+
+                    //类根路径  F:\Seeyon\A8\ApacheJetspeed\webapps\seeyon\WEB-INF\classes
+                    String classPath = this.getClass().getResource("/").getPath();
+                    mergeSavePath = (classPath.substring(0, classPath.indexOf("WEB-INF"))).concat("pdf") + File.separator + edocSummary.getId() + File.separator;
+                    File f = new File(mergeSavePath);
+                    if (!f.exists()) {
+                        f.mkdirs();
+                    }
+
+                    flag = mergeFormAndBody(edocSummary, "http://localhost:8088/convert/webservice/ConvertService?wsdl", mergerpath, mergeSavePath, isReceive);
+                    bodyFile.delete();
+                    formFile.delete();
+                    if (flag != -1) {
+                        String pdfpath = mergeSavePath.concat(edocSummary.getId().toString() + ".pdf");
+                        returnFileName(mergeSavePath, "2", new File(pdfpath));
+                    }
                 }
-
-                flag= mergeFormAndBody(edocSummary, "http://10.100.1.132:8088/convert/webservice/ConvertService?wsdl", mergerpath, mergeSavePath, isReceive);
-                bodyFile.delete();
-                formFile.delete();
-                String pdfpath=mergeSavePath.concat(edocSummary.getId().toString() + ".pdf");
-                returnFileName(mergeSavePath, "2", new File(pdfpath));
-
             }
-        }catch (Exception e){
+
+        } catch (Exception e) {
             e.printStackTrace();
         }
-        // 0:代表转换成功，-1：转换失败
+        // 0:代表转换成功，-1：转换失败  -2：表示公文单模板不存在
         return flag;
     }
 
@@ -3342,7 +3347,7 @@ public class EdocController extends BaseController {
      */
     public int mergeFormAndBody(EdocSummary edocSummary, String url, String mergepath, String savepath, boolean flag) {
 
-        int cbCode=-1;
+        int cbCode = -1;
 
         String reverPath = savepath.replaceAll("\\\\", "/");
         CtpPdfSavepath ctpPdfSavepath = new CtpPdfSavepath(edocSummary.getId(), reverPath);
@@ -3354,20 +3359,20 @@ public class EdocController extends BaseController {
         }
 
         Client client;
-        String ftpdownload = "y:" + savepath.substring(savepath.indexOf("pdf") + 3).replaceAll("\\\\", "/");
+        String ftpdownload = savepath.replaceAll("\\\\", "/");
         System.out.println("合并文件保存路径：" + ftpdownload);
         try {
             client = new Client(new URL(url));
             Object[] result = client.invoke("ConcatFiles",
                     new Object[]{mergepath, ftpdownload, 0, 5, url, "test"});
             System.out.println(result[0]);
-            Document document= DocumentHelper.parseText((String) result[0]);
-            Element rootElt=document.getRootElement();
-            String ts=rootElt.elementText("result");
+            Document document = DocumentHelper.parseText((String) result[0]);
+            Element rootElt = document.getRootElement();
+            String ts = rootElt.elementText("result");
             System.out.println(ts);
-            cbCode=Integer.parseInt(ts);
+            cbCode = Integer.parseInt(ts);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e.getMessage() + "，转换服务出问题了 ~v~ 请联系管理员！");
         }
         return cbCode;
     }
@@ -3418,7 +3423,7 @@ public class EdocController extends BaseController {
      * @param sFunction   使用的转换方法
      * @param sFilePath   转换的文件路径
      */
-    private void insertFormRegionValue(EdocSummary edocSummary, String sUrl, String sFunction, String templetpath, String sFilePath) throws RemoteException {
+    private int insertFormRegionValue(EdocSummary edocSummary, String templetpath, String sFilePath) throws RemoteException {
         // edocSummary属性域
         StringBuffer sTarget = new StringBuffer();
         // edocSymmary属性域值
@@ -4618,28 +4623,8 @@ public class EdocController extends BaseController {
         System.out.println("sTarget::" + sTarget.substring(0, sTarget.lastIndexOf("|")).toString());
         System.out.println("sTargetValue::" + sTargetValue.substring(0, sTargetValue.lastIndexOf("|")).toString());
 
-        //第一种方法：采用pdf模板 调用敏行的接口 插入数据
-//        Client client;
-//        try {
-//            client = new Client(new URL(sUrl));
-//            Object[] result = client.invoke(
-//                    sFunction,
-//                    new Object[]{
-//                            templetpath,
-//                            1,
-//                            sTarget, sTargetValue,
-//                            true,
-//                            true,
-//                            123,
-//                            "",
-//                            "",
-//                            sFilePath,
-//                            5,
-//                            sUrl, "test"});
-//            System.out.println(result[0]);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
+
+        int flag = 0;
         /**第二种方法：采用freemark模板 */
         Configuration configuration = new Configuration();
         try {
@@ -4656,11 +4641,14 @@ public class EdocController extends BaseController {
             template.process(dataMap, out);
             out.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            flag = -2;
+            logger.error(e.getMessage() + ",模板不存在！");
         } catch (Exception e) {
-            e.printStackTrace();
+            flag = -2;
+            logger.error(e.getMessage() + ",模板不存在！");
         }
 
+        return flag;
     }
 
 
