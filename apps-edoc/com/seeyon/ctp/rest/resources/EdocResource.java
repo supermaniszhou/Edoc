@@ -174,10 +174,15 @@ public class EdocResource extends BaseResource {
 
             File file = new File(realPath);
             String md5Flag = MD5Utils.getFileMD5(file);
-            map.put("result", "success!");
-            map.put("data", sPath);
-            map.put("md5", md5Flag);
-
+            if(file.exists()){
+                map.put("result", "success!");
+                map.put("data", sPath);
+                map.put("md5", md5Flag);
+            }else{
+                map.put("result", "请求的文件不存在！~v~");
+                map.put("data", null);
+                map.put("md5", null);
+            }
 
 //            //以流的形式返回
 //            File f = new File(realPath);
