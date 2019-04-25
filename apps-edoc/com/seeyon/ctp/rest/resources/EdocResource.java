@@ -112,7 +112,7 @@ public class EdocResource extends BaseResource {
     @POST
     @Consumes({MediaType.MULTIPART_FORM_DATA})
     @Path("uploadPdf")
-    public Response uploadPdf(@QueryParam("edocSummaryId") String edocSummaryId, @FormDataParam("pdfFile") InputStream file) {
+    public Response uploadPdf(@QueryParam("edocSummaryId") String edocSummaryId, @FormDataParam("upload_file") InputStream file) {
         Map map = new HashMap();
         OutputStream os = null;
         try {
