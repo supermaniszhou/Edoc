@@ -179,7 +179,7 @@ public class EdocResource extends BaseResource {
                 map.put("data", sPath);
                 map.put("md5", md5Flag);
             }else{
-                map.put("result", "请求的文件不存在！~v~");
+                map.put("result", "请求的文件不存在！~m~");
                 map.put("data", null);
                 map.put("md5", null);
             }
