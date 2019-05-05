@@ -2,6 +2,7 @@ package com.seeyon.v3x.edoc.controller;
 
 import java.io.*;
 import java.lang.reflect.Method;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.rmi.RemoteException;
@@ -3279,16 +3280,16 @@ public class EdocController extends BaseController {
                     }
                     //ftp://root:xkjt1234@10.100.1.76:21/2007/word.docx
                     String mergeSavePath = wdPdfPath;
-                    String ftpUpload = wdPdfPath.replaceAll("\\\\", "/");
+                    String ftpUpload ="z:" + wdPdfPath.substring(wdPdfPath.indexOf("upload") + 6).replaceAll("\\\\", "/");
                     String wendanP = ftpUpload.concat(edocSummary.getId().toString() + ".doc");
-                    String zwp = sBodyPath.replaceAll("\\\\", "/");
-                    String zhengwenP = zwp;
+                    String zwp = sBodyPath.substring(sBodyPath.indexOf("upload") + 6).replaceAll("\\\\", "/");
+                    String zhengwenP = "z:" + zwp;
 //                String fujianP = "";
                     StringBuffer fujianP = new StringBuffer();
                     if (!("").equals(attFileName) && attFileName.length() > 0) {
                         String[] arr = attFileName.split("\\|");
                         for (int i = 0; i < arr.length; i++) {
-                            fujianP.append(arr[i].replaceAll("\\\\", "/"));
+                            fujianP.append( "z:" + arr[i].substring(arr[i].indexOf("upload")+6).replaceAll("\\\\", "/"));
                             fujianP.append("|");
                         }
                     }
@@ -3309,7 +3310,7 @@ public class EdocController extends BaseController {
                         f.mkdirs();
                     }
 
-                    flag = mergeFormAndBody(edocSummary, "http://localhost:8088/convert/webservice/ConvertService?wsdl", mergerpath, mergeSavePath, isReceive);
+                    flag = mergeFormAndBody(edocSummary, "http://10.100.1.132:8088/convert/webservice/ConvertService?wsdl", mergerpath, mergeSavePath, isReceive);
                     bodyFile.delete();
                     formFile.delete();
                     if (flag != -1) {
@@ -3359,18 +3360,26 @@ public class EdocController extends BaseController {
         }
 
         Client client;
-        String ftpdownload = savepath.replaceAll("\\\\", "/");
+        String ftpdownload =  "y:" + savepath.substring(savepath.indexOf("pdf") + 3).replaceAll("\\\\", "/");
         System.out.println("合并文件保存路径：" + ftpdownload);
         try {
-            client = new Client(new URL(url));
-            Object[] result = client.invoke("ConcatFiles",
-                    new Object[]{mergepath, ftpdownload, 0, 5, url, "test"});
-            System.out.println(result[0]);
-            Document document = DocumentHelper.parseText((String) result[0]);
-            Element rootElt = document.getRootElement();
-            String ts = rootElt.elementText("result");
-            System.out.println(ts);
-            cbCode = Integer.parseInt(ts);
+            URL testUrl=new URL(url);
+            HttpURLConnection huc=(HttpURLConnection)testUrl.openConnection();
+            huc.setUseCaches(false);
+            huc.setConnectTimeout(3000);
+            int status=huc.getResponseCode();
+            if(200 == status){
+                client = new Client(new URL(url));
+                Object[] result = client.invoke("ConcatFiles",
+                        new Object[]{mergepath, ftpdownload, 0, 5, url, "test"});
+                System.out.println(result[0]);
+                Document document = DocumentHelper.parseText((String) result[0]);
+                Element rootElt = document.getRootElement();
+                String ts = rootElt.elementText("result");
+                System.out.println(ts);
+                cbCode = Integer.parseInt(ts);
+            }
+
         } catch (Exception e) {
             logger.error(e.getMessage() + "，转换服务出问题了 ~v~ 请联系管理员！");
         }
