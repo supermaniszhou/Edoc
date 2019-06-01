@@ -2993,14 +2993,13 @@ public class EdocController extends BaseController {
                     sb.append("history.back();");
                     rendJavaScript(response, sb.toString());
                     return null;
-                } else {
-                    try {
-                        affairId = edocManager.transRunCase(edocSummary, body, senderOninion, sendType, options, comm, agentToId,
-                                isNewSent, process_xml, workflowNodePeoplesInput, workflowNodeConditionInput, templeteProcessId);
-                    } catch (Exception e) {
-                        LOGGER.error("发起公文流程异常", e);
-                    }
                 }
+            }
+            try {
+                affairId = edocManager.transRunCase(edocSummary, body, senderOninion, sendType, options, comm, agentToId,
+                        isNewSent, process_xml, workflowNodePeoplesInput, workflowNodeConditionInput, templeteProcessId);
+            } catch (Exception e) {
+                LOGGER.error("发起公文流程异常", e);
             }
 
             // 不跟踪 或者 全部跟踪的时候不向部门跟踪表中添加数据，所以将下面这个参数串设置为空。
